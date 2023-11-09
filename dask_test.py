@@ -20,6 +20,7 @@ args = parser.parse_args()
 folder_path = Path(args.folder_pattern)  # Data/
 # image(s) to be read
 file_pattern = '20191104_ABAT029_REG1-CTRL_DAPI_CD31-ENDOM-680_Th-647_hCD45-33-488_aSMA-CY3_aGFP-594.ome.btf'
+# file_pattern = '20191104_ABAT029_REG1-CTRL_REG2-80ENGR_DAPI_CD31-ENDOM-680_Th-647_hCD45-33-488_aSMA-CY3_aGFP-594.ome.btf'
 
 # for stacking files along time dimension into one timeseries
 filenames = []
@@ -32,7 +33,7 @@ filenames = sorted(filenames)
 print('Reading first file')
 read_time = timer()
 sample = AICSImage(filenames[0])   # AICSImage object will always be TCZYX
-print(f'Reading first file took {timer() - read_time} s')
+print(f'Reading first file took {timer() - read_time:.6f} s')
 
 # create dask stack of lazy image readers
 print('Creating lazy image readers')
@@ -54,7 +55,7 @@ timelapse = da.squeeze(timelapse)
 # factor = np.array([4, 4, 4])
 # desired_chunksize = np.array(timelapse.shape[-3:])//factor
 rechunked = da.rechunk(timelapse, (1, sample.shape[-3], sample.shape[-2], sample.shape[-1]))
-print(f'Creating dask stack took {timer() - dask_time} s')
+print(f'Creating dask stack took {timer() - dask_time:.6f} s')
 
 open_napari(rechunked)
 
@@ -64,10 +65,11 @@ napari.run()
 # with open('channels_dask_loading.csv', 'a', newline='') as csvfile:
 #     writer = csv.writer(csvfile, delimiter=',')
 #
-#     for i in np.arange(6):
-#         load_time = timer()
-#         viewer.dims.set_point(0, i)
-#         row = timer() - load_time
-#         writer.writerow(f'{row:.6f}')
+#     for iteration in np.arange(10):
+#         for i in np.arange(6):
+#             load_time = timer()
+#             viewer.dims.set_point(0, i)
+#             row = timer() - load_time
+#             writer.writerow(f'{row:.6f}')
 
 
