@@ -15,12 +15,17 @@ from timer_functions import read_file, open_napari
 
 parser = argparse.ArgumentParser()
 parser.add_argument("folder_pattern", help="folders matching this pattern in the parent directory will be searched")
+parser.add_argument("file_pattern", help="files with this pattern will be searched")
+parser.add_argument("-r", "--rechunking", help="create 2d chunks", action='store_true')
+
 args = parser.parse_args()
 
 folder_path = Path(args.folder_pattern)  # Data/
+rechunking = args.rechunking
+
 # image(s) to be read
-file_pattern = '20191104_ABAT029_REG1-CTRL_DAPI_CD31-ENDOM-680_Th-647_hCD45-33-488_aSMA-CY3_aGFP-594.ome.btf'
-# file_pattern = '20191104_ABAT029_REG1-CTRL_REG2-80ENGR_DAPI_CD31-ENDOM-680_Th-647_hCD45-33-488_aSMA-CY3_aGFP-594.ome.btf'
+# file_pattern = '20191104_ABAT029_REG1-CTRL_DAPI_CD31-ENDOM-680_Th-647_hCD45-33-488_aSMA-CY3_aGFP-594.ome.btf'
+file_pattern = args.file_pattern  # Fluo-N3DL-TRIF/01/t*.tif
 
 # for stacking files along time dimension into one timeseries
 filenames = []
@@ -44,32 +49,32 @@ print('Creating dask stack')
 dask_time = timer()
 dask_arrays = [
     da.from_delayed(delayed_reader,
-                    shape=sample.shape[1:5],  # to obtain CZYX
+                    shape=sample.shape[-3:],  # to obtain dimension of one volume
                     dtype=sample.dtype) for delayed_reader in lazy_arrays]
 
 # stack into one large dask.array
-timelapse = da.stack(dask_arrays, axis=0)
-timelapse = da.squeeze(timelapse)
+stack = da.stack(dask_arrays, axis=0)
 
 # rechunking volumes
-# factor = np.array([4, 4, 4])
-# desired_chunksize = np.array(timelapse.shape[-3:])//factor
-rechunked = da.rechunk(timelapse, (1, sample.shape[-3], sample.shape[-2], sample.shape[-1]))
-print(f'Creating dask stack took {timer() - dask_time:.6f} s')
+if rechunking:
+    rechunked = da.rechunk(stack, (1, 1, sample.shape[-2], sample.shape[-1]))
+    print(f'Creating dask stack took {timer() - dask_time:.6f} s')
+    open_napari(rechunked)
+else:
+    open_napari(stack)
 
-open_napari(rechunked)
 
 napari.run()
 
 # # to put into napari ipython terminal:
-# with open('channels_dask_loading.csv', 'a', newline='') as csvfile:
+# with open('csv/t_dask_loading.csv', 'w', newline='') as csvfile:
 #     writer = csv.writer(csvfile, delimiter=',')
 #
 #     for iteration in np.arange(10):
-#         for i in np.arange(6):
+#         for i in np.arange(viewer.dims.nsteps[0]):
 #             load_time = timer()
 #             viewer.dims.set_point(0, i)
 #             row = timer() - load_time
-#             writer.writerow(f'{row:.6f}')
+#             writer.writerow({row:.6f})
 
 

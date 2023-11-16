@@ -19,5 +19,5 @@ def read_file(filepath):
 
 @timer_func
 def open_napari(image):
-    viewer = napari.Viewer(ndisplay=2)
-    viewer.add_image(image, scale=(1,1,1))
+    viewer = napari.Viewer(ndisplay=3)
+    viewer.add_image(image, contrast_limits=[0, 17000], scale=(1,1,1))
