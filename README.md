@@ -1,5 +1,5 @@
 # CBIAS Poster 06
-Title: Exploting napari for big data visualisation
+Title: Exploiting napari for big data visualisation
 
 Material for CBIAS23 including flash talk slides and poster. 
 A collection of scripts to benchmark napari loading times with and without dask parallelisation.
